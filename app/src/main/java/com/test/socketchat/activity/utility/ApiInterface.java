@@ -1,5 +1,7 @@
 package com.test.socketchat.activity.utility;
 
+import com.test.socketchat.activity.model.ModelUser;
+import com.test.socketchat.activity.response.ResponseAddPostComment;
 import com.test.socketchat.activity.response.ResponsePost;
 import com.test.socketchat.activity.response.ResponsePostComment;
 import com.test.socketchat.activity.response.ResponsePostLikes;
@@ -52,4 +54,11 @@ public interface ApiInterface {
 
     @GET("api/post/comments/{postId}")
     Call<ResponsePostComment> getPostComments(@Path("postId") String postId);
+
+    @POST("api/comment/post")
+    @FormUrlEncoded
+    Call<ResponseAddPostComment> postComment(@Field("commentText") String comment, @Field("userId") String user, @Field("postId") int post);
+
+    @GET("api/search/{query}")
+    Call<ResponseRegisterUser> getSearch(@Path("query") String query);
 }

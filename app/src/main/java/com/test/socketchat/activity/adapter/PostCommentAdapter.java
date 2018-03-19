@@ -2,9 +2,12 @@ package com.test.socketchat.activity.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,10 +26,12 @@ public class PostCommentAdapter extends RecyclerView.Adapter<PostCommentAdapter.
 
     private List<ModelPostComment> comments;
     private Context context;
+    private CommentClickListner clickListner;
 
-    public PostCommentAdapter(List<ModelPostComment> comments, Context context) {
+    public PostCommentAdapter(List<ModelPostComment> comments, Context context,CommentClickListner commentClickListner) {
         this.comments = comments;
         this.context = context;
+        this.clickListner=commentClickListner;
     }
 
     @Override
@@ -35,11 +40,24 @@ public class PostCommentAdapter extends RecyclerView.Adapter<PostCommentAdapter.
     }
 
     @Override
-    public void onBindViewHolder(CommentHolder holder, int position) {
+    public void onBindViewHolder(final CommentHolder holder, final int position) {
         String urlUserImgae = context.getResources().getString(R.string.host) + "profile/" + comments.get(position).getUserProfilePhoto();
         Picasso.get().load(urlUserImgae).transform(new CircleTransform()).error(R.drawable.profile).into(holder.ivProfile);
         holder.tvName.setText(comments.get(position).getDisplayName());
         holder.tvComment.setText(comments.get(position).getCommentText());
+        holder.tvName.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+        holder.tvName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickListner.onUser(position);
+            }
+        });
+        holder.ivProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickListner.onUser(position);
+            }
+        });
     }
 
     @Override
@@ -59,5 +77,9 @@ public class PostCommentAdapter extends RecyclerView.Adapter<PostCommentAdapter.
             tvName=itemView.findViewById(R.id.tv_user_display_name);
             tvComment=itemView.findViewById(R.id.tv_comment);
         }
+    }
+
+    public interface CommentClickListner {
+        void onUser(int position);
     }
 }

@@ -70,6 +70,7 @@
                                 android:textAlignment="center"
                                 android:textColor="@android:color/black"
                                 android:textSize="16sp"
+                                android:id="@+id/tv_change_image"
                                 android:onClick="onSelectImage"/>
 
                         </FrameLayout>
@@ -216,7 +217,8 @@
             android:elevation="10dp"
             android:onClick="onClickGo"
             android:src="@drawable/ic_go"
-            android:tint="@android:color/white" />
+            android:tint="@android:color/white"
+            android:id="@+id/fab_go"/>
 
     </FrameLayout>
 </android.support.design.widget.CoordinatorLayout>

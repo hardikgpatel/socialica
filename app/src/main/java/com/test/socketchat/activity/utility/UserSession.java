@@ -6,12 +6,9 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.test.socketchat.activity.activity.SplashScreenActivity;
-import com.test.socketchat.activity.model.ModelRegisterUser;
-import com.test.socketchat.activity.response.ResponseRegisterUser;
+import com.test.socketchat.activity.model.ModelUser;
 
 import java.util.HashMap;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by lcom151-two on 3/8/2018.
@@ -62,7 +59,7 @@ public class UserSession {
         return sp.getBoolean(IS_LOGIN, false);
     }
 
-    public void setUserData(ModelRegisterUser user) {
+    public void setUserData(ModelUser user) {
         this.editor.putString(KEY_DISPLAY_NAME, user.getDisplayName());
         this.editor.putString(KEY_USER_NAME, user.getUserName().toString());
         this.editor.putString(KEY_EMAIL, user.getEmail());

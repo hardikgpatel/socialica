@@ -1,6 +1,7 @@
 package com.test.socketchat.activity.adapter;
 
 import android.content.Context;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -119,6 +120,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
                 }
             });
 
+            holder.tvLike.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListner.onLike(position);
+                }
+            });
+
             holder.tvComment.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -126,10 +134,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
                 }
             });
 
-            holder.tvLike.setOnClickListener(new View.OnClickListener() {
+            holder.tvUserName.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    clickListner.onLike(position);
+                    clickListner.onUser(position);
+                }
+            });
+
+            holder.ivPostUserProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListner.onUser(position);
                 }
             });
 
@@ -167,6 +182,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
 
         void onComment(int position);
 
-        void onPost(int position);
+        void onUser(int position);
     }
 }

@@ -1,7 +1,6 @@
 package com.test.socketchat.activity.activity;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -9,9 +8,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -49,12 +50,14 @@ import com.test.socketchat.activity.adapter.StatusAdapter;
 import com.test.socketchat.activity.response.ResponseRegisterUser;
 import com.test.socketchat.activity.utility.BlurBuilder;
 import com.test.socketchat.activity.utility.CircleTransform;
-import com.test.socketchat.activity.utility.CommonUtils;
 import com.test.socketchat.activity.utility.ImageFilePath;
 import com.test.socketchat.activity.utility.SocketChatApp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -119,32 +122,51 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
         adapter.notifyDataSetChanged();
         edtStatus.setText(arrStatus.get(0));
 
-        setBackground();
 
-        Call<ResponseRegisterUser> callGetProfile = SocketChatApp.getApiService().getProfile(SocketChatApp.getSession().getUserID());
-        callGetProfile.enqueue(new Callback<ResponseRegisterUser>() {
-            @Override
-            public void onResponse(Call<ResponseRegisterUser> call, Response<ResponseRegisterUser> response) {
-                if (response.isSuccessful() && response.code() == 200) {
-                    edtDisplayName.setText(response.body().getUser().get(0).getDisplayName());
-                    edtStatus.setText(response.body().getUser().get(0).getStatus());
-                    edtEmail.setText(response.body().getUser().get(0).getEmail());
-                    edtUserName.setText(response.body().getUser().get(0).getUserName().toString());
-                    Picasso.get().load(getResources().getString(R.string.host) + "profile/"+response.body().getUser().get(0).getUserProfilePhoto()).transform(new CircleTransform()).error(R.drawable.profile).into(ivProfile);
-                    ivProfile.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            setBackground();
-                        }
-                    },1000);
+        try {
+            Call<ResponseRegisterUser> callGetProfile=null;
+            Intent intUser = getIntent();
+            if (intUser.hasExtra("userId") && !(intUser.getStringExtra("userId").equals(SocketChatApp.getSession().getUserID()))) {
+                callGetProfile= SocketChatApp.getApiService().getProfile(intUser.getStringExtra("userId"));
+                edtEmail.setEnabled(false);
+                edtDisplayName.setEnabled(false);
+                edtUserName.setEnabled(false);
+                tvStatus.setEnabled(false);
+                findViewById(R.id.iv_change_status).setVisibility(View.GONE);
+                findViewById(R.id.fab_go).setVisibility(View.GONE);
+                findViewById(R.id.tv_change_image).setVisibility(View.GONE);
+            }else{
+                callGetProfile= SocketChatApp.getApiService().getProfile(SocketChatApp.getSession().getUserID());
+            }
+            callGetProfile.enqueue(new Callback<ResponseRegisterUser>() {
+                @Override
+                public void onResponse(Call<ResponseRegisterUser> call, Response<ResponseRegisterUser> response) {
+                    if (response.isSuccessful() && response.code() == 200) {
+                        edtDisplayName.setText(response.body().getUser().get(0).getDisplayName());
+                        edtStatus.setText(response.body().getUser().get(0).getStatus());
+                        edtEmail.setText(response.body().getUser().get(0).getEmail());
+                        edtUserName.setText(response.body().getUser().get(0).getUserName().toString());
+                        Picasso.get().load(getResources().getString(R.string.host) + "profile/" + response.body().getUser().get(0).getUserProfilePhoto()).transform(new CircleTransform()).error(R.drawable.profile).into(ivProfile);
+                        //urlProfile=getResources().getString(R.string.host) + "profile/" + response.body().getUser().get(0).getUserProfilePhoto();
+                        setBackground(getResources().getString(R.string.host) + "profile/" + response.body().getUser().get(0).getUserProfilePhoto());
+                        /*ivProfile.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                setBackground();
+                            }
+                        }, 1000);*/
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<ResponseRegisterUser> call, Throwable t) {
+                @Override
+                public void onFailure(Call<ResponseRegisterUser> call, Throwable t) {
 
-            }
-        });
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //setBackground(urlProfile);
 
         edtDisplayName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -182,11 +204,56 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
-    private void setBackground(){
-        BitmapDrawable drawable = (BitmapDrawable) ivProfile.getDrawable();
+    private void setBackground(String sUrl) {
+        try{
+            Bitmap image;
+            if(sUrl!=null){
+                Log.e(TAG, "setBackground: "+sUrl );
+                /*URL url = new URL(sUrl);
+                image = BitmapFactory.decodeStream(url.openConnection().getInputStream());*/
+                new getImageFromURL().execute(sUrl);
+            }else{
+                BitmapDrawable drawable = (BitmapDrawable) ivProfile.getDrawable();
+                image = drawable.getBitmap();
+                Bitmap blurB = BlurBuilder.blur(UpdateProfileActivity.this, image);
+                findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));
+            }
+        }catch (Exception e){
+            Log.e(TAG, "setBackground: " );
+            e.printStackTrace();
+        }
+        /*BitmapDrawable drawable = (BitmapDrawable) ivProfile.getDrawable();
         Bitmap original = drawable.getBitmap();
         Bitmap blurB = BlurBuilder.blur(UpdateProfileActivity.this, original);
-        findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));
+        findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));*/
+    }
+
+    class getImageFromURL extends AsyncTask<String,Void,Void>{
+
+        Bitmap image;
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            try{
+                URL url = new URL(strings[0]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                image = BitmapFactory.decodeStream(input);
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Bitmap blurB = BlurBuilder.blur(UpdateProfileActivity.this, image);
+            findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));
+        }
     }
 
     private boolean isValidEmail() {
@@ -253,14 +320,14 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
 
     public void onClickGo(View view) {
         if (isValidDisplayname() && isValidEmail()) {
-            RequestBody userId = RequestBody.create(MediaType.parse("text/plain"),SocketChatApp.getSession().getUserID() );
-            RequestBody email = RequestBody.create(MediaType.parse("text/plain"),edtEmail.getText().toString() );
-            RequestBody displayName = RequestBody.create(MediaType.parse("text/plain"),edtDisplayName.getText().toString() );
-            RequestBody status = RequestBody.create(MediaType.parse("text/plain"),edtStatus.getText().toString() );
-            RequestBody userName = RequestBody.create(MediaType.parse("text/plain"),edtUserName.getText().toString().trim() );
-            Log.e(TAG, "onClickGo: Image file: "+profileImage.body());
-            Call<ResponseRegisterUser> callRegister = SocketChatApp.getApiService().registerUserProfile(userId,email ,displayName ,status ,userName, profileImage);
-            Log.e(TAG, "onClickGo: request param : "+callRegister.request().body().toString());
+            RequestBody userId = RequestBody.create(MediaType.parse("text/plain"), SocketChatApp.getSession().getUserID());
+            RequestBody email = RequestBody.create(MediaType.parse("text/plain"), edtEmail.getText().toString());
+            RequestBody displayName = RequestBody.create(MediaType.parse("text/plain"), edtDisplayName.getText().toString());
+            RequestBody status = RequestBody.create(MediaType.parse("text/plain"), edtStatus.getText().toString());
+            RequestBody userName = RequestBody.create(MediaType.parse("text/plain"), edtUserName.getText().toString().trim());
+            Log.e(TAG, "onClickGo: Image file: " + profileImage.body());
+            Call<ResponseRegisterUser> callRegister = SocketChatApp.getApiService().registerUserProfile(userId, email, displayName, status, userName, profileImage);
+            Log.e(TAG, "onClickGo: request param : " + callRegister.request().body().toString());
             try {
                 callRegister.enqueue(new Callback<ResponseRegisterUser>() {
                     @Override
@@ -430,12 +497,12 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
                     }
                     uri = data.getData();
                     ivProfile.setImageURI(uri);
-                    Log.e(TAG, "onActivityResult: File Image : "+file.getPath() );
+                    Log.e(TAG, "onActivityResult: File Image : " + file.getPath());
                     RequestBody mFile = RequestBody.create(MediaType.parse("image/png"), file);
                     profileImage = MultipartBody.Part.createFormData("userPhoto", SocketChatApp.getSession().getUserID(), mFile);
                     isImageSelected = true;
                     Toast.makeText(this, "Done : " + file.getName(), Toast.LENGTH_SHORT).show();
-                    setBackground();
+                    setBackground(null);
                 } else {
                     Toast.makeText(this, "unable to find image", Toast.LENGTH_SHORT).show();
                     finish();
@@ -455,12 +522,12 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
                 Toast.makeText(this, "path : " + compress, Toast.LENGTH_SHORT).show();
                 file = new File(compress);
             }
-            Log.e(TAG, "onActivityResult: File Image : "+file.getPath() );
+            Log.e(TAG, "onActivityResult: File Image : " + file.getPath());
             RequestBody mFile = RequestBody.create(MediaType.parse("image/png"), file);
             profileImage = MultipartBody.Part.createFormData("userPhoto", SocketChatApp.getSession().getUserID(), mFile);
             isImageSelected = true;
             Toast.makeText(this, "Done : " + file.getName(), Toast.LENGTH_SHORT).show();
-            setBackground();
+            setBackground(null);
         }
     }
 

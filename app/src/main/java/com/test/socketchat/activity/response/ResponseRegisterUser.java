@@ -2,7 +2,7 @@ package com.test.socketchat.activity.response;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.test.socketchat.activity.model.ModelRegisterUser;
+import com.test.socketchat.activity.model.ModelUser;
 
 import java.util.List;
 
@@ -11,26 +11,39 @@ import java.util.List;
  */
 
 public class ResponseRegisterUser {
+    @SerializedName("message")
+    @Expose
+    private List<ModelUser> message = null;
+
     @SerializedName("status")
     @Expose
     private Integer status;
-    @SerializedName("message")
+
+    @SerializedName("error")
     @Expose
-    private List<ModelRegisterUser> message = null;
+    private String error;
 
     public Integer getStatus() {
         return status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 
     public void setStatus(Integer status) {
         this.status = status;
     }
 
-    public List<ModelRegisterUser> getUser() {
+    public List<ModelUser> getUser() {
         return message;
     }
 
-    public void setMessage(List<ModelRegisterUser> message) {
+    public void setMessage(List<ModelUser> message) {
         this.message = message;
     }
 }

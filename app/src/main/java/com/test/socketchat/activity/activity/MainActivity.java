@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton fabMenu;*/
 
     private TextView tvActionHome, tvActionChat, tvActionProfile, tvActionSetting, tvToolbarName;
-    private ImageView ivActionHome, ivActionChat, ivActionProfile, ivActionSetting, ivToolbarProfile, ivToolbarNotification;
+    private ImageView ivActionHome, ivActionChat, ivActionProfile, ivActionSetting, ivToolbarSearch, ivToolbarNotification;
     private FrameLayout fl;
     private FragmentManager fragmentManager;
     private boolean isDashboard=true;
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         tvActionSetting = findViewById(R.id.tv_action_setting);
 
         tvToolbarName = findViewById(R.id.tv_toolbar_name);
-        ivToolbarProfile = findViewById(R.id.iv_toolbar_profile);
+        ivToolbarSearch = findViewById(R.id.iv_toolbar_search);
         ivToolbarNotification = findViewById(R.id.iv_toolbar_notification);
 
         fl = findViewById(R.id.fl_content);
@@ -89,6 +89,13 @@ public class MainActivity extends AppCompatActivity {
         this.loadFragment(new NewsFeedsFragment());
         ImageView ivProfile=findViewById(R.id.iv_toolbar_profile);
         Picasso.get().load(getResources().getString(R.string.host) + "profile/" + SocketChatApp.getSession().getProfileImage()).transform(new CircleTransform()).error(R.drawable.profile).into(ivProfile);
+
+        ivToolbarSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this,SearchActivity.class));
+            }
+        });
     }
 
     @Override

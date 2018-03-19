@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * Created by lcom151-two on 3/8/2018.
  */
 
-public class ModelRegisterUser {
+public class ModelUser {
     @SerializedName("userId")
     @Expose
     private String userId;
