@@ -82,12 +82,13 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
     private View statusDialogView;
     private TextView tvStatus;
     private Dialog dialog;
-    private boolean isImageSelected = false;
+    private boolean isImageSelected = false, isChange = false;
     private static final int REQUEST_GALLERY = 1;
     private static final int REQUEST_SETTING = 2;
     private static final int REQUEST_CAMERA = 3;
     private Uri uri;
     private MultipartBody.Part profileImage;
+    private Bitmap image;
 
     //private ScrollView sv;
 
@@ -124,10 +125,10 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
 
 
         try {
-            Call<ResponseRegisterUser> callGetProfile=null;
+            Call<ResponseRegisterUser> callGetProfile = null;
             Intent intUser = getIntent();
             if (intUser.hasExtra("userId") && !(intUser.getStringExtra("userId").equals(SocketChatApp.getSession().getUserID()))) {
-                callGetProfile= SocketChatApp.getApiService().getProfile(intUser.getStringExtra("userId"));
+                callGetProfile = SocketChatApp.getApiService().getProfile(intUser.getStringExtra("userId"));
                 edtEmail.setEnabled(false);
                 edtDisplayName.setEnabled(false);
                 edtUserName.setEnabled(false);
@@ -135,8 +136,8 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
                 findViewById(R.id.iv_change_status).setVisibility(View.GONE);
                 findViewById(R.id.fab_go).setVisibility(View.GONE);
                 findViewById(R.id.tv_change_image).setVisibility(View.GONE);
-            }else{
-                callGetProfile= SocketChatApp.getApiService().getProfile(SocketChatApp.getSession().getUserID());
+            } else {
+                callGetProfile = SocketChatApp.getApiService().getProfile(SocketChatApp.getSession().getUserID());
             }
             callGetProfile.enqueue(new Callback<ResponseRegisterUser>() {
                 @Override
@@ -176,7 +177,7 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+                isChange = true;
             }
 
             @Override
@@ -192,7 +193,7 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+                isChange = true;
             }
 
             @Override
@@ -205,21 +206,21 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
     }
 
     private void setBackground(String sUrl) {
-        try{
+        try {
             Bitmap image;
-            if(sUrl!=null){
-                Log.e(TAG, "setBackground: "+sUrl );
+            if (sUrl != null) {
+                Log.e(TAG, "setBackground: " + sUrl);
                 /*URL url = new URL(sUrl);
                 image = BitmapFactory.decodeStream(url.openConnection().getInputStream());*/
                 new getImageFromURL().execute(sUrl);
-            }else{
+            } else {
                 BitmapDrawable drawable = (BitmapDrawable) ivProfile.getDrawable();
                 image = drawable.getBitmap();
                 Bitmap blurB = BlurBuilder.blur(UpdateProfileActivity.this, image);
                 findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));
             }
-        }catch (Exception e){
-            Log.e(TAG, "setBackground: " );
+        } catch (Exception e) {
+            Log.e(TAG, "setBackground: ");
             e.printStackTrace();
         }
         /*BitmapDrawable drawable = (BitmapDrawable) ivProfile.getDrawable();
@@ -228,13 +229,11 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
         findViewById(R.id.iv_back).setBackground(new BitmapDrawable(getResources(), blurB));*/
     }
 
-    class getImageFromURL extends AsyncTask<String,Void,Void>{
-
-        Bitmap image;
+    class getImageFromURL extends AsyncTask<String, Void, Void> {
 
         @Override
         protected Void doInBackground(String... strings) {
-            try{
+            try {
                 URL url = new URL(strings[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
@@ -242,7 +241,7 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
                 InputStream input = connection.getInputStream();
                 image = BitmapFactory.decodeStream(input);
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;
@@ -319,47 +318,75 @@ public class UpdateProfileActivity extends AppCompatActivity implements StatusAd
     }
 
     public void onClickGo(View view) {
-        if (isValidDisplayname() && isValidEmail()) {
-            RequestBody userId = RequestBody.create(MediaType.parse("text/plain"), SocketChatApp.getSession().getUserID());
-            RequestBody email = RequestBody.create(MediaType.parse("text/plain"), edtEmail.getText().toString());
-            RequestBody displayName = RequestBody.create(MediaType.parse("text/plain"), edtDisplayName.getText().toString());
-            RequestBody status = RequestBody.create(MediaType.parse("text/plain"), edtStatus.getText().toString());
-            RequestBody userName = RequestBody.create(MediaType.parse("text/plain"), edtUserName.getText().toString().trim());
-            Log.e(TAG, "onClickGo: Image file: " + profileImage.body());
-            Call<ResponseRegisterUser> callRegister = SocketChatApp.getApiService().registerUserProfile(userId, email, displayName, status, userName, profileImage);
-            Log.e(TAG, "onClickGo: request param : " + callRegister.request().body().toString());
-            try {
-                callRegister.enqueue(new Callback<ResponseRegisterUser>() {
+        Dexter.withActivity(UpdateProfileActivity.this)
+                .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .withListener(new PermissionListener() {
                     @Override
-                    public void onResponse(Call<ResponseRegisterUser> call, Response<ResponseRegisterUser> response) {
-                        if (response.isSuccessful()) {
-                            Log.e(TAG, "onResponse: status - " + response.code() + " Response: " + response.body().getUser());
-                            if (response.code() == 200) {
-                                Log.e(TAG, "onResponse: response: " + response.body().getUser());
-                                startActivity(new Intent(UpdateProfileActivity.this, MainActivity.class));
-                                SocketChatApp.getSession().setUserData(response.body().getUser().get(0));
-//                            finish();
+                    public void onPermissionGranted(PermissionGrantedResponse response) {
+                        if (isChange || isImageSelected) {
+                            if (isValidDisplayname() && isValidEmail()) {
+                                if (!isImageSelected) {
+                                    RequestBody mFile = RequestBody.create(MediaType.parse("image/png"), new File(getRealPathFromURI(getImageUri(getApplicationContext(), image))));
+//                                    RequestBody mFile = RequestBody.create(MediaType.parse("image/png"), new File(getRealPathFromURI(getImageUri(getApplicationContext(), image))));
+                                    profileImage = MultipartBody.Part.createFormData("userPhoto", SocketChatApp.getSession().getUserID(), mFile);
+                                }
+                                RequestBody userId = RequestBody.create(MediaType.parse("text/plain"), SocketChatApp.getSession().getUserID());
+                                RequestBody email = RequestBody.create(MediaType.parse("text/plain"), edtEmail.getText().toString());
+                                RequestBody displayName = RequestBody.create(MediaType.parse("text/plain"), edtDisplayName.getText().toString());
+                                RequestBody status = RequestBody.create(MediaType.parse("text/plain"), edtStatus.getText().toString());
+                                RequestBody userName = RequestBody.create(MediaType.parse("text/plain"), edtUserName.getText().toString().trim());
+                                Log.e(TAG, "onClickGo: Image file: " + profileImage.body());
+                                Call<ResponseRegisterUser> callRegister = SocketChatApp.getApiService().registerUserProfile(userId, email, displayName, status, userName, profileImage);
+                                Log.e(TAG, "onClickGo: request param : " + callRegister.request().body().toString());
+                                try {
+                                    callRegister.enqueue(new Callback<ResponseRegisterUser>() {
+                                        @Override
+                                        public void onResponse(Call<ResponseRegisterUser> call, Response<ResponseRegisterUser> response) {
+                                            if (response.isSuccessful()) {
+                                                Log.e(TAG, "onResponse: status - " + response.code() + " Response: " + response.body().getUser());
+                                                if (response.code() == 200) {
+                                                    Log.e(TAG, "onResponse: response: " + response.body().getUser());
+                                                    SocketChatApp.getSession().setUserData(response.body().getUser().get(0));
+                                                    startActivity(new Intent(UpdateProfileActivity.this, MainActivity.class));
+                                                } else {
+                                                    Toast.makeText(UpdateProfileActivity.this, "Fail to register", Toast.LENGTH_SHORT).show();
+                                                }
+                                            } else {
+                                                Log.e(TAG, "onResponse: " + response.errorBody());
+                                                Toast.makeText(UpdateProfileActivity.this, "Something Wrong...", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<ResponseRegisterUser> call, Throwable t) {
+                                            Toast.makeText(UpdateProfileActivity.this, "something wrong : " + t.toString(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
                             } else {
-                                Toast.makeText(UpdateProfileActivity.this, "Fail to register", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(UpdateProfileActivity.this, "Please enter valid details", Toast.LENGTH_SHORT).show();
                             }
-                        } else {
-                            Log.e(TAG, "onResponse: " + response.errorBody());
-                            Toast.makeText(UpdateProfileActivity.this, "Something Wrong...", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
-                    public void onFailure(Call<ResponseRegisterUser> call, Throwable t) {
-                        Toast.makeText(UpdateProfileActivity.this, "something wrong : " + t.toString(), Toast.LENGTH_SHORT).show();
+                    public void onPermissionDenied(PermissionDeniedResponse response) {
+                        onShowPermisionDialoge();
                     }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-        } else {
-            Toast.makeText(this, "Please enter valid details", Toast.LENGTH_SHORT).show();
-        }
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                        token.continuePermissionRequest();
+                    }
+                }).withErrorListener(new PermissionRequestErrorListener() {
+            @Override
+            public void onError(DexterError error) {
+                Toast.makeText(UpdateProfileActivity.this, "Error : " + error, Toast.LENGTH_SHORT).show();
+            }
+        }).check();
     }
 
     public void onSelectStatus(View view) {

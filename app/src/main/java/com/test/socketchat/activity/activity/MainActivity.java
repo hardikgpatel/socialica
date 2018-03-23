@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -17,10 +18,12 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.test.socketchat.R;
 import com.test.socketchat.activity.adapter.PostAdapter;
+import com.test.socketchat.activity.db.entity.PostEntity;
 import com.test.socketchat.activity.fragment.NewsFeedsFragment;
 import com.test.socketchat.activity.utility.CircleTransform;
 import com.test.socketchat.activity.utility.SocketChatApp;
@@ -40,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton fabMenu;*/
 
     private TextView tvActionHome, tvActionChat, tvActionProfile, tvActionSetting, tvToolbarName;
-    private ImageView ivActionHome, ivActionChat, ivActionProfile, ivActionSetting, ivToolbarSearch, ivToolbarNotification;
+    private ImageView ivActionHome, ivActionChat, ivActionProfile, ivActionSetting, ivToolbarSearch, ivToolbarNotification,ivProfile;
     private FrameLayout fl;
     private FragmentManager fragmentManager;
     private boolean isDashboard=true;
@@ -70,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         tvToolbarName = findViewById(R.id.tv_toolbar_name);
         ivToolbarSearch = findViewById(R.id.iv_toolbar_search);
         ivToolbarNotification = findViewById(R.id.iv_toolbar_notification);
+        ivProfile =findViewById(R.id.iv_toolbar_profile);
 
         fl = findViewById(R.id.fl_content);
         tvActionHome.setTextSize(13);
@@ -87,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
         ivActionProfile.setColorFilter(Color.GRAY);
         ivActionSetting.setColorFilter(Color.GRAY);
         this.loadFragment(new NewsFeedsFragment());
-        ImageView ivProfile=findViewById(R.id.iv_toolbar_profile);
-        Picasso.get().load(getResources().getString(R.string.host) + "profile/" + SocketChatApp.getSession().getProfileImage()).transform(new CircleTransform()).error(R.drawable.profile).into(ivProfile);
 
         ivToolbarSearch.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,6 +98,10 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this,SearchActivity.class));
             }
         });
+
+        try{
+            new getFavoriteList().execute();
+        }catch (Exception e){e.printStackTrace();}
     }
 
     @Override
@@ -103,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         try {
             tvToolbarName.setText(SocketChatApp.getSession().getDisplayName());
+            Picasso.get().load(getResources().getString(R.string.host) + "profile/" + SocketChatApp.getSession().getProfileImage()).transform(new CircleTransform()).error(R.drawable.profile).into(ivProfile);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -300,11 +307,26 @@ public class MainActivity extends AppCompatActivity {
                 ivActionChat.setColorFilter(Color.GRAY);
                 ivActionProfile.setColorFilter(Color.GRAY);
                 ivActionSetting.setColorFilter(Color.WHITE);
-
                 SocketChatApp.getSession().logoutUser();
                 finish();
                 break;
         }
 
+    }
+
+    private class getFavoriteList extends android.os.AsyncTask<Void,Void,Void>{
+
+        List<PostEntity> favPost;
+        @Override
+        protected Void doInBackground(Void... voids) {
+            favPost=SocketChatApp.getDb().postDao().getFavorite();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(MainActivity.this, "Favorite Post: "+favPost.size(), Toast.LENGTH_SHORT).show();
+            super.onPostExecute(aVoid);
+        }
     }
 }

@@ -32,6 +32,18 @@
             android:layout_height="wrap_content"
             tools:text="Username" />
 
+        <TextView
+            android:id="@+id/tv_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Username" />
+
+        <TextView
+            android:id="@+id/tv_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Username" />
+
     </LinearLayout>
 
 </LinearLayout>

@@ -1,5 +1,7 @@
 package com.test.socketchat.activity.model;
 
+import android.text.SpannableString;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -38,6 +40,43 @@ public class ModelUser {
     @SerializedName("isDeleted")
     @Expose
     private Integer isDeleted;
+
+    private SpannableString spannableDisplayName;
+    private SpannableString spannableUserName;
+    private SpannableString spannableEmail;
+    private SpannableString spannableId;
+
+    public SpannableString getSpannableDisplayName() {
+        return spannableDisplayName;
+    }
+
+    public void setSpannableDisplayName(SpannableString spannableDisplayName) {
+        this.spannableDisplayName = spannableDisplayName;
+    }
+
+    public SpannableString getSpannableUserName() {
+        return spannableUserName;
+    }
+
+    public SpannableString getSpannableEmail() {
+        return spannableEmail;
+    }
+
+    public void setSpannableEmail(SpannableString spannableEmail) {
+        this.spannableEmail = spannableEmail;
+    }
+
+    public SpannableString getSpannableId() {
+        return spannableId;
+    }
+
+    public void setSpannableId(SpannableString spannableId) {
+        this.spannableId = spannableId;
+    }
+
+    public void setSpannableUserName(SpannableString spannableUserName) {
+        this.spannableUserName = spannableUserName;
+    }
 
     public String getUserId() {
         return userId;

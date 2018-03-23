@@ -39,6 +39,7 @@ public class SearchActivity extends AppCompatActivity implements UserAdapter.Use
     private EditText edtSearch;
     private Call<ResponseRegisterUser> callSearch;
     private static final String TAG = SearchActivity.class.getSimpleName();
+    private boolean isSearched = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,60 +72,78 @@ public class SearchActivity extends AppCompatActivity implements UserAdapter.Use
         edtSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+                Log.e(TAG, "beforeTextChanged: "+s );
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(!TextUtils.isEmpty(edtSearch.getText().toString().trim())){
-                    onStartSearch();
-                }else{
+                Log.e(TAG, "onTextChanged: "+s+" start: "+start+" : bef : "+before+" : co : "+count );
+                if (!TextUtils.isEmpty(edtSearch.getText().toString().trim())) {
+                    if (isSearched) {
+                        adapter.getFilter().filter(edtSearch.getText().toString().trim());
+                    } else {
+                        onStartSearch();
+                    }
+                    isSearched=true;
+                } else {
+                    isSearched=false;
                     pbSearch.setVisibility(View.GONE);
                     ivClear.setVisibility(View.GONE);
                     tvNoUser.setVisibility(View.GONE);
                     users.clear();
-                    adapter.notifyDataSetChanged();
+                    adapter.getFilter().filter("");
+                    if (callSearch.isExecuted()) {
+                        callSearch.cancel();
+                    }
+                    tvNoUser.setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-
+                Log.e(TAG, "afterTextChanged: "+s );
+                if(adapter.getItemCount()==0){
+                    tvNoUser.setVisibility(View.VISIBLE);
+                }else{
+                    tvNoUser.setVisibility(View.GONE);
+                }
             }
         });
     }
 
     @Override
     public void onSelectUser(int position) {
-        Intent intUser=new Intent(SearchActivity.this, UpdateProfileActivity.class);
-        intUser.putExtra("userId",users.get(position).getUserId());
+        Intent intUser = new Intent(SearchActivity.this, UpdateProfileActivity.class);
+        intUser.putExtra("userId", users.get(position).getUserId());
         startActivity(intUser);
-        Log.e(TAG, "onUser: UserId : "+users.get(position).getUserId());
+        Log.e(TAG, "onUser: UserId : " + users.get(position).getUserId());
     }
 
-    private void onStartSearch(){
-        try{
+    private void onStartSearch() {
+        try {
             callSearch = SocketChatApp.getApiService().getSearch(edtSearch.getText().toString().trim());
             if (callSearch.isExecuted()) {
                 callSearch.cancel();
             } else {
                 pbSearch.setVisibility(View.VISIBLE);
                 ivClear.setVisibility(View.GONE);
+                Log.e(TAG, "onStartSearch: search URL : "+callSearch.request().url());
                 callSearch.enqueue(new Callback<ResponseRegisterUser>() {
                     @Override
                     public void onResponse(Call<ResponseRegisterUser> call, Response<ResponseRegisterUser> response) {
                         pbSearch.setVisibility(View.GONE);
                         ivClear.setVisibility(View.VISIBLE);
-                        if (response.isSuccessful() && response.code()==200) {
+                        if (response.isSuccessful() && response.code() == 200) {
                             users.clear();
                             users.addAll(response.body().getUser());
                             adapter.notifyDataSetChanged();
+                            adapter.getFilter().filter(edtSearch.getText().toString().trim());
                         } else {
                             Log.e(TAG, "onResponse: " + response.errorBody());
                         }
-                        if(users.size()>0){
+                        if (users.size() > 0) {
                             tvNoUser.setVisibility(View.GONE);
-                        }else{
+                        } else {
                             tvNoUser.setVisibility(View.VISIBLE);
                         }
                     }
@@ -134,15 +153,19 @@ public class SearchActivity extends AppCompatActivity implements UserAdapter.Use
                         pbSearch.setVisibility(View.GONE);
                         ivClear.setVisibility(View.VISIBLE);
                         Log.e(TAG, "onFailure: " + t.toString());
-                        if(users.size()>0){
-                            tvNoUser.setVisibility(View.GONE);
-                        }else{
-                            tvNoUser.setVisibility(View.VISIBLE);
+                        if (!callSearch.isCanceled()) {
+                            if (users.size() > 0) {
+                                tvNoUser.setVisibility(View.GONE);
+                            } else {
+                                tvNoUser.setVisibility(View.VISIBLE);
+                            }
                         }
                     }
                 });
             }
 
-        }catch (Exception e){e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

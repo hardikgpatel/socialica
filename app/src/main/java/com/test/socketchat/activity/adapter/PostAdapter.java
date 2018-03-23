@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.test.socketchat.R;
+import com.test.socketchat.activity.db.entity.PostEntity;
 import com.test.socketchat.activity.model.ModelPost;
 import com.test.socketchat.activity.response.ResponsePostOption;
 import com.test.socketchat.activity.utility.CircleTransform;
@@ -34,11 +35,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
     private List<ModelPost> posts;
     private Context context;
     private PostClickListner clickListner;
+    private List<PostEntity> favPosts;
     private static final String TAG = PostAdapter.class.getSimpleName();
 
-    public PostAdapter(List<ModelPost> posts, Context context, PostClickListner clickListner) {
+    public PostAdapter(List<ModelPost> posts,List<PostEntity> favPosts, Context context, PostClickListner clickListner) {
         this.context = context;
         this.posts = posts;
+        this.favPosts=favPosts;
         this.clickListner = clickListner;
     }
 
@@ -52,6 +55,30 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
         try {
             String urlPostImgae = context.getResources().getString(R.string.host) + "post/" + posts.get(position).getPostUrl();
             String urlUserImgae = context.getResources().getString(R.string.host) + "profile/" + posts.get(position).getUserProfilePhoto();
+
+            holder.ivFavPost.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListner.onAddFavorite(position);
+                    Toast.makeText(context, "Add to favorite", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            for (int i = 0; i < favPosts.size(); i++) {
+                if(favPosts.get(i).getPostId()==posts.get(position).getPostId()){
+                    holder.ivFavPost.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_favorite));
+                    Log.e(TAG, "onBindViewHolder: Match favorite piost not match" );
+                    holder.ivFavPost.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(context, "already Favorite", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    break;
+                }else{
+                    Log.e(TAG, "onBindViewHolder: Match favorite piost not match" );
+                }
+            }
 
             // set post image if available
             if (!TextUtils.isEmpty(posts.get(position).getPostUrl().toString())) {
@@ -148,6 +175,14 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
                 }
             });
 
+            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+
+                    return true;
+                }
+            });
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -159,7 +194,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
     }
 
     public class PostHolder extends RecyclerView.ViewHolder {
-        ImageView ivPostUserProfile, ivPost, ivPostPrivacy, ivLike;
+        ImageView ivPostUserProfile, ivPost, ivPostPrivacy, ivLike,ivFavPost;
         TextView tvTimeStamp, tvLike, tvComment, tvPostContent, tvUserName;
 
         public PostHolder(View itemView) {
@@ -173,15 +208,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostHolder> {
             tvPostContent = itemView.findViewById(R.id.tv_post_content);
             tvUserName = itemView.findViewById(R.id.tv_post_name);
             ivPostPrivacy = itemView.findViewById(R.id.iv_post_privacy);
+            ivFavPost=itemView.findViewById(R.id.iv_fav_post);
         }
     }
 
     public interface PostClickListner {
 
         void onLike(int position);
-
         void onComment(int position);
-
         void onUser(int position);
+        void onAddFavorite(int position);
+        void onDelete(int position);
+//        void onRemoveFavorite(int position);
     }
 }

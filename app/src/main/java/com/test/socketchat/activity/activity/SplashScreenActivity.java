@@ -348,16 +348,16 @@ public class SplashScreenActivity extends AppCompatActivity {
 
                 if (response.isSuccessful()) {
                     if (response.code() == 200) {
-                        Toast.makeText(SplashScreenActivity.this, "message: Match: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(SplashScreenActivity.this, "message: Match: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                         SocketChatApp.getSession().createLoginSession(strContact);
                         startActivity(new Intent(SplashScreenActivity.this, UpdateProfileActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(SplashScreenActivity.this, "message: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SplashScreenActivity.this, "OTP not match, please enter valid OTP", Toast.LENGTH_SHORT).show();
                     }
 
                 }else{
-                    Toast.makeText(SplashScreenActivity.this, "Something Wrong", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SplashScreenActivity.this, "OTP not match, please enter valid OTP", Toast.LENGTH_SHORT).show();
                 }
             }
 

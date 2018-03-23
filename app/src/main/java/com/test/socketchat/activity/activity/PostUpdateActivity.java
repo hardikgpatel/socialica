@@ -20,7 +20,7 @@ public class PostUpdateActivity extends AppCompatActivity {
          View bottomSheet=findViewById(R.id.ll);
          sheetBehavior=BottomSheetBehavior.from(bottomSheet);
          sheetBehavior.setHideable(false);
-         sheetBehavior.setPeekHeight(140);
+         //sheetBehavior.setPeekHeight(140);
          findViewById(R.id.ll_attachment).setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
